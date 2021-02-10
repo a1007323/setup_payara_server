@@ -1,0 +1,23 @@
+---
+- hosts: localhost
+  vars:
+    adminconsoleSg: "test_group"
+    adminport: 5092
+    ip_int_jumphost: "10.142.245.213/32"
+  tasks:
+    - name: Create security groups in aws
+      ec2_group:
+        name: "{{ item.group_id }}"
+        region: us-east-2
+        aws_access_key: AKIA5HTWIO4TN53DWV7K
+        aws_secret_key: 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
+        description: "security group to open {{ item.port }}"
+        rules:
+          - proto: tcp
+            ports:
+            - "{{ item.port }}"
+            cidr_ip: "{{ item.cidr_ip }}"
+            rule_desc: "allow {{ item.cidr_ip }} on port {{ item.port }}"
+      loop:
+        - {'group_id' : '{{ adminconsoleSg }}','port' : '{{ adminport }}','cidr_ip' : '{{ ip_int_jumphost }}'}
+

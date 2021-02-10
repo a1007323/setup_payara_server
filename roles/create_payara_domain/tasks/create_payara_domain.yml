@@ -1,0 +1,89 @@
+---
+# tasks file for roles/create_payara_domain
+- name: create directory
+  become: true
+  file:
+    name: "{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+  loop:
+    - "{{ esoaprops }}/webprops/{{ appname }}"
+    - "{{ esoaloc }}/serviceconfig/{{ appname }}"
+    - "{{ esoadata }}/logs/{{ appname }}"
+    - "/AppTemp/{{ appname }}"
+    - "/AppTemp/{{ appname }}/cache"
+
+- name: create password file
+  become: true
+  copy:
+    dest: "/payara/ESOA/serviceconfig/{{ appname }}/passwort.txt"
+    content: |
+      AS_ADMIN_MASTERPASSWORD={{ masterpw }}
+      AS_ADMIN_PASSWORD={{ adminpassword }}
+
+- name: defining port numbers
+  set_fact:
+    instancessl: "{{ instanceport | int +1 }}"
+    adminport: "{{ instanceport | int +2 }}"
+    iiopport: "{{ instanceport | int +3 }}"
+    iiopsslport: "{{ instanceport | int +4 }}"
+    iiopmutulauthport: "{{ instanceport | int +5 }}"
+    jmxport: "{{ instanceport | int +6 }}"
+    jmsport: "{{ instanceport | int +7 }}"
+    osgiport: "{{ instanceport | int +8 }}"
+    debugport: "{{ instanceport | int +9 }}"
+    passwordfile: "{{ passworddir }}/{{ appname }}/passwort.txt"
+    javapath: "{{ ansible_env.JAVA_HOME }}"
+
+- set_fact:
+    run_command: >
+      {{ installationPath }}/bin/asadmin --user {{ user }} --passwordfile {{ passwordfile }}
+      create-domain --domaindir {{ domaindir }} --template {{ templatefile }} --adminport
+      {{ adminport }} --instanceport {{ instanceport }} --domainproperties
+      http.ssl.port={{ instancessl }}:jms.port={{ jmsport }}:domain.jmxPort={{
+      jmxport }}:orb.listener.port={{ iiopport }}:orb.ssl.port={{
+      iiopsslport }}:orb.mutualauth.port={{ iiopmutulauthport }}:osgi.shell.telnet.port={{
+      osgiport }}:java.debugger.port={{ debugport }} {{ appname }}
+
+- name: Changing directory permission
+  become: true
+  file:
+    path: "{{ installationPath }}/bin/asadmin"
+    mode: '0755'
+
+- name: Execute command
+  become: true
+  shell: "{{ run_command }}"
+
+- name: change directory permission
+  become: true
+  file:
+    path: "{{ esoaloc }}/payara-domains/{{ appname }}"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0755'
+
+- name: start domain app
+  become: true
+  shell: "{{ installationPath }}/bin/asadmin start-domain {{ appname }}"
+
+- name: Create security groups in aws
+  ec2_group:
+    name: "{{ appname }}"
+    region: us-east-2
+    aws_access_key: AKIA5HTWIO4TN53DWV7K
+    aws_secret_key: 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
+    description: "security group to open {{ adminport }} and {{ instancessl }}"
+    rules:
+      - proto: tcp
+        ports:
+        - "{{ adminport }}"
+        cidr_ip: "{{ ip_int_jumphost }}"
+        rule_desc: "allow {{ ip_int_jumphost }} on port {{ adminport }}"
+      - proto: tcp
+        ports:
+        - "{{ instancessl }}"
+        cidr_ip: "{{ ip_int_apache }}"
+        rule_desc: "allow {{ ip_int_apache }} on port {{ instancessl }}"
+  delegate_to: localhost

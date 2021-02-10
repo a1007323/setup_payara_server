@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: calling role file
+      include_role:
+        name: create_payara_domain

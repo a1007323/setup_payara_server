@@ -1,0 +1,6 @@
+---
+- name: create payara domain
+  include_tasks: create_payara_domain.yml
+
+- name: configure payara domain
+  include_tasks: configure_payara_domain.yml

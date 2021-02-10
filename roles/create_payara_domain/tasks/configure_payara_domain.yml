@@ -1,0 +1,60 @@
+---
+# Task file to configure payara domain
+
+- name: setting log command
+  set_fact:
+    set_log_attr_cmd: >
+      {{ installationPath }}/bin/asadmin  --port {{ adminport }} --user GlassFishAdm
+      --passwordfile {{ passwordfile }} set-log-attributes
+      --target=server --validate=false com.sun.enterprise.server.logging.GFFileHandler.file=/data/logs/{{ appname }}/server.log
+
+- name: Execuing command to set log attributes
+  shell: "{{ set_log_attr_cmd }}"
+
+- name: path for siemens
+  set_fact:
+    end_path: "{{ appname }}/propertyfilesDir"
+  when: whichframework == "siemens"
+
+- name: path for la2
+  set_fact:
+    end_path: "webprops/{{ appname }}"
+  when: whichframework == "la2"
+
+
+- name: command for create resource
+  set_fact:
+    custom_resource_cmd: >
+      {{ installationPath }}/bin/asadmin  --port {{ adminport }} --user GlassFishAdm
+      --passwordfile {{ passwordfile }} create-custom-resource --target=server --restype java.lang.String
+      --factoryclass org.glassfish.resources.custom.factory.PrimitivesAndStringFactory
+      --property value={{ esoaprops }}/webprops/{{ appname }} {{ end_path }}
+    create_jdbc_resource: >
+      {{ installationPath }}/bin/asadmin  --port {{ adminport }} --user GlassFishAdm
+      --passwordfile {{ passwordfile }} create-jdbc-resource --target=server
+      --connectionpoolid {{ appname }}"DBConnection" jdbc/{{ appname }}"DB"
+    enable_source_admin: >
+      {{ installationPath }}/bin/asadmin --port {{ adminport }} --user GlassFishAdm
+      --passwordfile {{ passwordfile }} enable-secure-admin --adminalias s1as --instancealias glassfish-instance
+    set_server_config: >
+      {{ installationPath }}/bin/asadmin  --port {{ adminport }} --user GlassFishAdm
+      --passwordfile {{ passwordfile }} set server-config.jms-service.jms-host.default_JMS_host.port={{ jmsport }}
+
+- name: create resource command execution
+  shell: "{{ custom_resource_cmd }}"
+
+- name: create jdbc resource command execution
+  shell: "{{ create_jdbc_resource }}"
+
+#- name: enable source admin command execution
+#  shell: "{{ enable_source_admin }}"
+
+- name: command to set server config
+  shell: "{{ set_server_config }}"
+
+- name: Stopping the domain
+  shell: "{{ installationPath }}/bin/asadmin stop-domain {{ appname }}"
+  ignore_errors: true
+
+- name: Starting the domain
+  shell: "{{ installationPath }}/bin/asadmin start-domain {{ appname }}"
