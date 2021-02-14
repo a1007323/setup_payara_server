@@ -53,7 +53,7 @@
     path: "{{ installationPath }}/bin/asadmin"
     mode: '0755'
 
-- name: Execute command
+- name: Command to create domain
   become: true
   shell: "{{ run_command }}"
 
@@ -63,12 +63,11 @@
     path: "{{ esoaloc }}/payara-domains/{{ appname }}"
     owner: "{{ username }}"
     group: "{{ username }}"
-    mode: '0755'
+    mode: '0775'
     recurse: true
 
 - name: start domain app
-  shell: "{{ installationPath }}/bin/asadmin start-domain {{ appname }}"
-  #become: true
+  shell: nohup {{installationPath}}/bin/asadmin start-domain {{appname}} --interactive=true
 
 - name: Create security group rules
   shell: "{{ item }}"
