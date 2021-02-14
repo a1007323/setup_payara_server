@@ -35,7 +35,7 @@
     osgiport: "{{ instanceport | int +8 }}"
     debugport: "{{ instanceport | int +9 }}"
     passwordfile: "{{ passworddir }}/{{ appname }}/passwort.txt"
-    javapath: "{{ ansible_env.JAVA_HOME }}"
+    javapath: "/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.282.b08-2.el8_3.x86_64"
 
 - set_fact:
     run_command: >
@@ -66,28 +66,12 @@
     mode: '0755'
     recurse: true
 
-- pause: 
-    seconds: 60
-
 - name: start domain app
   shell: "{{ installationPath }}/bin/asadmin start-domain {{ appname }}"
+  #become: true
 
-- name: Create security groups in aws
-  ec2_group:
-    name: "{{ appname }}"
-    region: us-east-2
-    aws_access_key: AKIA5HTWIO4TN53DWV7K
-    aws_secret_key: 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
-    description: "security group to open {{ adminport }} and {{ instancessl }}"
-    rules:
-      - proto: tcp
-        ports:
-        - "{{ adminport }}"
-        cidr_ip: "{{ ip_int_jumphost }}"
-        rule_desc: "allow {{ ip_int_jumphost }} on port {{ adminport }}"
-      - proto: tcp
-        ports:
-        - "{{ instancessl }}"
-        cidr_ip: "{{ ip_int_apache }}"
-        rule_desc: "allow {{ ip_int_apache }} on port {{ instancessl }}"
-  delegate_to: localhost
+- name: Create security group rules
+  shell: "{{ item }}"
+  loop:
+    - "/usr/local/bin/aws ec2 authorize-security-group-ingress --group-id {{adminconsoleSg}} --protocol tcp --port {{adminport}} --cidr {{ip_int_jumphost}}"
+    - "/usr/local/bin/aws ec2 authorize-security-group-ingress --group-id {{privateapacheSg}} --protocol tcp --port {{instancessl}} --cidr {{ip_int_apache}}"
