@@ -1,6 +1,6 @@
 ---
 # tasks file for roles/create_payara_domain
-- name: create directory
+- name: create required directories for {{ appname }}
   become: true
   file:
     name: "{{ item }}"
@@ -35,10 +35,10 @@
     osgiport: "{{ instanceport | int +8 }}"
     debugport: "{{ instanceport | int +9 }}"
     passwordfile: "{{ passworddir }}/{{ appname }}/passwort.txt"
-    javapath: "/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.282.b08-2.el8_3.x86_64"
+    javapath: "{{ ansible_env.JAVA_HOME }}"
 
 - set_fact:
-    run_command: >
+    create_payara_domain_cmd: >
       {{ installationPath }}/bin/asadmin --user {{ user }} --passwordfile {{ passwordfile }}
       create-domain --domaindir {{ domaindir }} --template {{ templatefile }} --adminport
       {{ adminport }} --instanceport {{ instanceport }} --domainproperties
@@ -53,9 +53,9 @@
     path: "{{ installationPath }}/bin/asadmin"
     mode: '0755'
 
-- name: Command to create domain
+- name: Executing command to create domain
   become: true
-  shell: "{{ run_command }}"
+  shell: "{{ create_payara_domain_cmd }}"
 
 - name: change directory permission
   become: true
@@ -67,7 +67,7 @@
     recurse: true
 
 - name: start domain app
-  shell: nohup {{installationPath}}/bin/asadmin start-domain {{appname}} --interactive=true
+  shell: "nohup {{installationPath}}/bin/asadmin start-domain {{appname}}"
 
 - name: Create security group rules
   shell: "{{ item }}"
@@ -77,10 +77,6 @@
 
 - name: copy library jars
   include_tasks: copy_lib_jars.yml
-
-- name: debugging test
-  debug:
-    msg: "out of copy lib jars"
 
 - name: update single domain
   include_tasks: update_single_domain.yml

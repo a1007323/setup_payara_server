@@ -1,4 +1,27 @@
 ---
+
+- name: Finding port number of network listener
+  shell: >
+    xmllint --xpath '//config[@name="server-config"]/network-config/network-listeners/network-listener[@name="admin-listener"]/@port'
+    /payara/ESOA/payara-domains/{{ appname }}/config/domain.xml | sed -e 's/^[^"]*"//' -e 's/"$//'
+  register: port
+  become: true
+
+- name: fetching port number
+  set_fact:
+    port: "{{ port.stdout }}"
+
 - name: create payara domain
   include_tasks: create_payara_domain.yml
+  when: domain_state == "create_new_domain"
 
+- name: update single domain
+  include_tasks: update_single_domain.yml
+  when: domain_state == "update_single_domain"
+
+- name: update existing domain
+  shell: >
+    {{ asadminPath }}/asadmin --host localhost --port {{ port }} --user {{ user }}
+    --passwordfile {{ pwdFilePath }}/{{ appname }}/{{ pwdFileName }} create-admin-object
+    --raname {{ rarName }} --restype {{ class_type[type] }} --property PhysicalName={{ resourcename }} jms/{{ resourcename }}
+  when: domain_state == "update_existing_domain"

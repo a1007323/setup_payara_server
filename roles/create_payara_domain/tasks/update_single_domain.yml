@@ -1,24 +1,5 @@
 ---
 
-- name: Fetching port number of network listener
-  shell: >
-    xmllint --xpath '//config[@name="server-config"]/network-config/network-listeners/network-listener[@name="admin-listener"]/@port'
-    /payara/ESOA/payara-domains/{{ appname }}/config/domain.xml | sed -e 's/^[^"]*"//' -e 's/"$//'
-  register: port
-  become: true
-
-- name: debugging port number
-  debug:
-    var: port
-
-- name: Fetching port number
-  set_fact:
-    port: "{{ port.stdout }}"
-
-- name: debugging port number
-  debug:
-    var: port
-
 - name: deploy_rar
   shell: >
     {{ asadminPath }}/asadmin --host localhost --port {{ port }} --user {{ user }}

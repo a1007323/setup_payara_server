@@ -1,9 +1,5 @@
-create_domain()
-{
-  echo "Result: $domainname $password $port $framework"
-  sleep 10
-ansible-playbook playbook.yaml -vv -i ./inventory -e "appname=$domainname instanceport=$port whichframework=$framework adminpassword=$password domain_status=create"
-}
+#!bin/bash
+#Shell script to execute setup payara server playbook
 
 show_menu()
 {
@@ -20,7 +16,7 @@ show_menu()
        read -p "Enter the domain password " password
        read -p "Enter the domain base port " port
        read -p "Enter the domain framework " framework
-       create_domain $domainname $password $port $framework
+       ansible-playbook playbook.yaml -vv -e "appname=$domainname instanceport=$port whichframework=$framework adminpassword=$password domain_state=create_new_domain"
         ;;
     2) #read -p "Enter the application name to add default JMS configuration to an existing domain:" appname 
        show_jms_menu 
@@ -31,7 +27,7 @@ show_menu()
         exit 0
         ;;
     esac
-#show_menu
+show_menu
 }
 #show_menu
 
@@ -47,7 +43,7 @@ show_jms_menu()
     read -p "Enter Choice [ 1 - 2] " choice
     case $choice in
     1) read -p "Enter the domain name to add default JMS configuration to an existing domain:" appname
-	   update_single_domain $appname
+        ansible-playbook playbook.yaml -vv -e "appname=$appname domain_state=update_single_domain"
         ;;
     2) #read -p "Enter the application name to add default JMS configuration to an existing domain:" appname
        show_custom_topic_queue_menu
@@ -74,11 +70,11 @@ show_custom_topic_queue_menu()
 	case $choice in
     1) read -p "Enter the domain name (Example : changeevent) " appname
        read -p "Enter the physical name of the resource " resourcename
-        update_existing_domain $topicClass $resourcename $appname
+            ansible-playbook playbook.yaml -vv -e "appname=$appname resourcename=$resourcename type=topicClass domain_state=update_existing_domain"
         ;;
     2)  read -p "Enter the domain name (Example : changeevent) " appname
 	read -p "Enter the physical name of the resource " resourcename
-	    update_existing_domain $queueClass $resourcename $appname
+	    ansible-playbook playbook.yaml -vv -e "appname=$appname resourcename=$resourcename type=queueClass domain_state=update_existing_domain"
         ;;
    
 

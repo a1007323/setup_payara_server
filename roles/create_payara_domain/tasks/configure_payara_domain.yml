@@ -21,8 +21,7 @@
     end_path: "webprops/{{ appname }}"
   when: whichframework == "la2"
 
-
-- name: command for create resource
+- name: defining variables for different commands
   set_fact:
     custom_resource_cmd: >
       {{ installationPath }}/bin/asadmin  --port {{ adminport }} --user GlassFishAdm
@@ -46,15 +45,14 @@
 - name: create jdbc resource command execution
   shell: "{{ create_jdbc_resource }}"
 
-#- name: enable source admin command execution
-#  shell: "{{ enable_source_admin }}"
+- name: enable source admin command execution
+  shell: "{{ enable_source_admin }}"
 
 - name: command to set server config
   shell: "{{ set_server_config }}"
 
 - name: Stopping the domain
   shell: "{{ installationPath }}/bin/asadmin stop-domain {{ appname }}"
-  ignore_errors: true
 
 - name: Starting the domain
   shell: "nohup {{ installationPath }}/bin/asadmin start-domain {{ appname }}"

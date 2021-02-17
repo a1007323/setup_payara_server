@@ -8,13 +8,13 @@
     - {'source' : '{{ softwarePath }}/Admin/3_payara_updates/domain_libs/jaas/', 'destination' : '{{ esoaDomains }}/payara-domains/{{ appname }}/lib'}
     - {'source' : '{{ softwarePath }}/Admin/3_payara_updates/logging.template', 'destination' : '{{softwarePath}}/Admin/3_payara_updates/logging.properties'}
 
-- name: Changing the domain name with appname
+- name: Changing the domain name with appname in logging.properties file
   replace:
     path: "{{ softwarePath }}/Admin/3_payara_updates/logging.properties"
     regexp: "DOMAINNAME"
     replace: "{{ appname }}"
 
-- name: copy properties file
+- name: copy properties file to config of {{ appname }}
   copy:
     src: "{{ softwarePath }}/Admin/3_payara_updates/logging.properties"
     dest: "{{ esoaDomains }}/payara-domains/{{ appname }}/config"
@@ -25,7 +25,7 @@
 - name: Starting the domain
   shell: "nohup {{ installationPath }}/bin/asadmin start-domain {{ appname }}"
 
-- name: Copy the template file
+- name: Copy the template file to {{ appname }}.service
   copy:
     src: "{{ servicetemplate }}/payaraservice.template"
     dest: "{{ servicetemplate }}/{{ appname }}.service"
@@ -39,11 +39,11 @@
     - {'exp' : 'DOMAINNAME', 'replace' : '{{ appname }}'}
     - {'exp' : 'PAYARASOFTWARE', 'replace' : '{{ payaraversion }}'}
 
-- name: move the service file
+- name: move the service file to systemd directory
   command: "mv {{ servicetemplate }}/{{ appname }}.service /etc/systemd/system/"
   become: true
 
-- name: Changing directory permission
+- name: Changing {{ appname }}.service permission
   become: true
   file:
     path: "/etc/systemd/system/{{ appname }}.service"
@@ -55,9 +55,9 @@
   command: "systemctl daemon-reload"
   become: true
 
-#- name: Enable domain service
-#  command: "systemctl enable {{ appname }}.service"
-#  become: true
+- name: Enable domain service
+  command: "systemctl enable {{ appname }}.service"
+  become: true
 
 - name: Reload daemon service
   command: "systemctl daemon-reload"
