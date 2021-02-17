@@ -1,0 +1,64 @@
+---
+#Task file to copy the library files
+- name: copy jar files
+  copy:
+    src: "{{ item.source }}"
+    dest: "{{ item.destination }}"
+  loop:
+    - {'source' : '{{ softwarePath }}/Admin/3_payara_updates/domain_libs/jaas/', 'destination' : '{{ esoaDomains }}/payara-domains/{{ appname }}/lib'}
+    - {'source' : '{{ softwarePath }}/Admin/3_payara_updates/logging.template', 'destination' : '{{softwarePath}}/Admin/3_payara_updates/logging.properties'}
+
+- name: Changing the domain name with appname
+  replace:
+    path: "{{ softwarePath }}/Admin/3_payara_updates/logging.properties"
+    regexp: "DOMAINNAME"
+    replace: "{{ appname }}"
+
+- name: copy properties file
+  copy:
+    src: "{{ softwarePath }}/Admin/3_payara_updates/logging.properties"
+    dest: "{{ esoaDomains }}/payara-domains/{{ appname }}/config"
+
+- name: Stopping the domain
+  shell: "{{ installationPath }}/bin/asadmin stop-domain {{ appname }}"
+
+- name: Starting the domain
+  shell: "nohup {{ installationPath }}/bin/asadmin start-domain {{ appname }}"
+
+- name: Copy the template file
+  copy:
+    src: "{{ servicetemplate }}/payaraservice.template"
+    dest: "{{ servicetemplate }}/{{ appname }}.service"
+
+- name: Changing the content of service file
+  replace:
+    path: "{{ servicetemplate }}/{{ appname }}.service"
+    regexp: "{{ item.exp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - {'exp' : 'DOMAINNAME', 'replace' : '{{ appname }}'}
+    - {'exp' : 'PAYARASOFTWARE', 'replace' : '{{ payaraversion }}'}
+
+- name: move the service file
+  command: "mv {{ servicetemplate }}/{{ appname }}.service /etc/systemd/system/"
+  become: true
+
+- name: Changing directory permission
+  become: true
+  file:
+    path: "/etc/systemd/system/{{ appname }}.service"
+    mode: '0755'
+    owner: "root"
+    group: "root"
+
+- name: Reload daemon service
+  command: "systemctl daemon-reload"
+  become: true
+
+#- name: Enable domain service
+#  command: "systemctl enable {{ appname }}.service"
+#  become: true
+
+- name: Reload daemon service
+  command: "systemctl daemon-reload"
+  become: true

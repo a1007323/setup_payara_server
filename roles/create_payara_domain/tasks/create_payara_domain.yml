@@ -74,3 +74,13 @@
   loop:
     - "/usr/local/bin/aws ec2 authorize-security-group-ingress --group-id {{adminconsoleSg}} --protocol tcp --port {{adminport}} --cidr {{ip_int_jumphost}}"
     - "/usr/local/bin/aws ec2 authorize-security-group-ingress --group-id {{privateapacheSg}} --protocol tcp --port {{instancessl}} --cidr {{ip_int_apache}}"
+
+- name: copy library jars
+  include_tasks: copy_lib_jars.yml
+
+- name: debugging test
+  debug:
+    msg: "out of copy lib jars"
+
+- name: update single domain
+  include_tasks: update_single_domain.yml

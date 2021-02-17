@@ -1,0 +1,62 @@
+---
+
+- name: Fetching port number of network listener
+  shell: >
+    xmllint --xpath '//config[@name="server-config"]/network-config/network-listeners/network-listener[@name="admin-listener"]/@port'
+    /payara/ESOA/payara-domains/{{ appname }}/config/domain.xml | sed -e 's/^[^"]*"//' -e 's/"$//'
+  register: port
+  become: true
+
+- name: debugging port number
+  debug:
+    var: port
+
+- name: Fetching port number
+  set_fact:
+    port: "{{ port.stdout }}"
+
+- name: debugging port number
+  debug:
+    var: port
+
+- name: deploy_rar
+  shell: >
+    {{ asadminPath }}/asadmin --host localhost --port {{ port }} --user {{ user }}
+    --passwordfile {{ pwdFilePath }}/{{ appname }}/{{ pwdFileName }} deploy
+    --type rar --name {{ rarName }} {{ rarLocation }}
+
+- name: create_resource_adapter
+  shell: >
+    {{ asadminPath }}/asadmin --host localhost --port {{ port }} --user {{ user }}
+    --passwordfile {{ pwdFilePath }}/{{ appname }}/{{ pwdFileName }} create-resource-adapter-config
+    --property ServerUrl={{ activeMQUrl }}:UserName={{ activeMQUser }}:Password={{ activeMQPassword }} {{ rarName }}
+
+- name: create_connection_pool
+  shell: >
+    {{ asadminPath }}/asadmin --host localhost --port {{ port }} --user {{ user }}
+     --passwordfile {{ pwdFilePath }}/{{ appname }}/{{ pwdFileName }} create-connector-connection-pool
+     --raname {{ rarName }} --connectiondefinition javax.jms.ConnectionFactory --ping true --isconnectvalidatereq true {{ poolName }}
+
+- name: create_connection_factory
+  shell: >
+    {{ asadminPath }}/asadmin --host localhost --port {{ port }} --user {{ user }}
+    --passwordfile {{ pwdFilePath }}/{{ appname }}/{{ pwdFileName }} create-connector-resource
+    --poolname {{ poolName }} {{ factoryName }}
+
+- name: create_login_queue
+  shell: >
+    {{ asadminPath }}/asadmin --host localhost --port {{ port }} --user {{ user }}
+    --passwordfile {{ pwdFilePath }}/{{ appname }}/{{ pwdFileName }} create-admin-object
+    --raname {{ rarName }} --restype javax.jms.Queue --property PhysicalName={{ loginQueueName }} jms/{{ loginQueueName }}
+
+- name: create_startup_queue
+  shell: >
+    {{ asadminPath }}/asadmin --host localhost --port {{ port }} --user {{ user }}
+    --passwordfile {{ pwdFilePath }}/{{ appname }}/{{ pwdFileName }} create-admin-object
+    --raname {{ rarName }} --restype javax.jms.Queue --property PhysicalName={{ applicationQueueName }} jms/{{ applicationQueueName }}
+
+- name: create_bot_queue
+  shell: >
+    {{ asadminPath }}/asadmin --host localhost --port {{ port }} --user {{ user }}
+    --passwordfile {{ pwdFilePath }}/{{ appname }}/{{ pwdFileName }} create-admin-object
+    --raname {{ rarName }} --restype javax.jms.Queue --property PhysicalName={{ botQueueName }} jms/{{ botQueueName }}
