@@ -52,4 +52,4 @@ applicationQueueName: queue/reportApplication
 botQueueName: queue/reportBot
 
 ######################Variables for JMS resource creation topic and queue###############
-class_type: { 'topicClass' : 'javax.jms.Topic', 'queueClass': 'javax.jms.Queue' }
+class_type: {'topicClass' : 'javax.jms.Topic', 'queueClass': 'javax.jms.Queue'}

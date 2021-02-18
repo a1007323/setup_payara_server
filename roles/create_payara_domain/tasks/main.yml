@@ -20,8 +20,6 @@
   when: domain_state == "update_single_domain"
 
 - name: update existing domain
-  shell: >
-    {{ asadminPath }}/asadmin --host localhost --port {{ port }} --user {{ user }}
-    --passwordfile {{ pwdFilePath }}/{{ appname }}/{{ pwdFileName }} create-admin-object
-    --raname {{ rarName }} --restype {{ class_type[type] }} --property PhysicalName={{ resourcename }} jms/{{ resourcename }}
+  include_role:
+    name: update_existing_domain
   when: domain_state == "update_existing_domain"
