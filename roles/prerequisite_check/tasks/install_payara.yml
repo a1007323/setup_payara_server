@@ -1,0 +1,29 @@
+---
+
+- name: Create a directory for payara
+  file:
+    path: "{{ payaraPath }}/payara-4.1.2.181"
+    state: directory
+
+- name: Extract payara zip file
+  unarchive:
+    src: "{{ softwarePath }}/Admin/payara-4.1.2.181.zip"
+    dest: "{{ payaraPath }}/payara-4.1.2.181"
+  become: true
+
+- name: change permission for payara directory
+  become: true
+  file:
+    name: "{{ payaraPath }}"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    recurse: true
+
+- name: change permission for asadmin
+  become: true
+  file:
+    name: "{{ payaraPath }}/payara-4.1.2.181/payara-4.1.2.181/glassfish/bin/asadmin"
+    owner: root
+    group: root
+    mode: '0744'
+

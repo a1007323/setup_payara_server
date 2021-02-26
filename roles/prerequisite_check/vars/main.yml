@@ -1,0 +1,8 @@
+---
+# vars file for roles/prerequisite_check
+
+username: "ec2-user"
+userHomeDir: "/home/{{ username }}"
+softwarePath: "{{ userHomeDir }}/softwares"
+payaraPath: '/payara/payara'
+

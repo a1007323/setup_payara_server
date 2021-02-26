@@ -1,0 +1,37 @@
+---
+# tasks file for roles/prerequisite_check
+
+- name: change permission for java directory
+  become: true
+  file:
+    name: "/payara/java/"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    recurse: true
+
+- name: Extract zulu java zip
+  unarchive:
+    src: "{{ softwarePath }}/Admin/1_jdk/zulu8.50.0.51-ca-jdk8.0.275-linux_x64.tar.gz"
+    dest: /payara/java/
+  become: true
+
+- name: move the file
+  copy: 
+    src: /payara/java/zulu8.50.0.51-ca-jdk8.0.275-linux_x64
+    dest: /payara/java/jdk1.8.0_275/
+    remote_src: true
+  become: true
+
+- name: set path for java
+  shell: echo "PATH=$PATH:/payara/java/jdk1.8.0_275/bin" >>{{ userHomeDir }}/.bashrc
+  become: true
+
+- name: export java home
+  shell: echo "export JAVA_HOME=/payara/java/jdk1.8.0_275" >>{{ userHomeDir }}/.bashrc
+  become: true
+
+- name: export path
+  shell: echo "export PATH" >>{{ userHomeDir }}/.bashrc
+  become: true
+
