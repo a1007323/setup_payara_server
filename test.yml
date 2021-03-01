@@ -1,87 +1,50 @@
 ---
 - hosts: all
   tasks:
-    - name: block to check java version
+    - name: including vars
+      include_vars: vars.yml
+
+    - name: checking java installed or not
+      include_role:
+        name: prerequisite_check
+        tasks_from: check_java.yml
+
+    - name: installing java
+      include_role:
+        name: prerequisite_check
+        tasks_from: install_java.yml
+      when:
+        - java_check is skipped
+        - proceed_installation
+
+    - name: checking payara installed or not
+      include_role:
+        name: prerequisite_check
+        tasks_from: check_payara.yml
+      when: proceed_installation
+
+    - name: Installing payara
+      include_role:
+        name: prerequisite_check
+        tasks_from: install_payara.yml
+      when:
+        - proceed_installation
+        - payara_status is skipped
+        - proceed_install_payara
+      ignore_errors: true
+
+    - name: block for domain check
       block:
-        - name: check java installed or not
-          shell: source ~/.bash_profile & java -version
-          args:
-            executable: /bin/bash
-          register: java_result
-          ignore_errors: true
-          become_user: ec2-user
-        - name: check 
-          set_fact:
-            proceed_installation: true
-          when:
-            - java_result.rc == 0
-            - '"zulu" in java_result|lower'
-          register: java_check
-        - pause:
-            prompt: "java zulu is not installed, enter yes if you want to install it else no"
-          register: proceed_installation
-          when: java_check is skipped
-        - name: fetching user input
-          set_fact:
-            proceed_installation: "{{ proceed_installation.user_input }}"
-          when: java_check is skipped
-        - name: calling role file
-          include_role:
-            name: prerequisite_check 
-            tasks_from: install_java.yml
-          when:
-            - java_check is skipped
-            - proceed_installation
-           
-    - name: payara check or not
-      block:
-        - name: payara installed or not
+        - name: check if domain already present
           stat:
-            path: /payara/payara/payara-4.1.2.181/payara-4.1.2.181/glassfish/bin/
-          register: payara_path_exist
-          become: true
-
-        - name: payara version check
-          become: true
-          shell: /payara/payara/payara-4.1.2.181/payara-4.1.2.181/glassfish/bin/asadmin version
-          register: payara_version
-          when: payara_path_exist.stat.exists
-          ignore_errors: true
-
-        - pause:
-           seconds: 30
-        - name: setting fact
-          set_fact:
-            proceed_install_payara: true
-          when:
-            - payara_version.rc is defined
-            - payara_version.rc == 0
-          register: payara_status
-
-        - pause:
-            prompt: "payara is not installed, enter yes if you want to install it else no"
-          register: proceed_install_payara
-          when:
-            - payara_status is skipped
-
-        - name: fetching user input
-          set_fact:
-            proceed_install_payara: "{{ proceed_install_payara.user_input }}"
-          when: payara_status is skipped
-
-        - name: Installing payara
+            path: /payara/ESOA/payara-domains/
+          register: domain_present
+        - name: domain already present
+          fail:
+            msg: domain is already present
+          when: domain_present.stat.exists
+        - name: calling role to create domain
           include_role:
-            name: prerequisite_check
-            tasks_from: install_payara.yml
-          when:
-            - payara_status is skipped
-            - proceed_install_payara
-
-        - name: block for domain check
-          block:
-            - name: check if domain already present
-              stat:
-                path: /payara/ESOA/payara-domains/
-              register: domain_present
-          when: not proceed_without_payara
+            name: create_payara_domain
+          when: proceed_install_payara
       when: proceed_installation

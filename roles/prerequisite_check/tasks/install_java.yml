@@ -35,3 +35,8 @@
   shell: echo "export PATH" >>{{ userHomeDir }}/.bashrc
   become: true
 
+- name: setting java path
+  become: true
+  lineinfile:
+    path: /payara/payara/payara-4.1.2.181/glassfish/config/asenv.conf
+    line: 'AS_JAVA="/payara/java/jdk1.8.0_275"'

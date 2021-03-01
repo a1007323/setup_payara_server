@@ -1,0 +1,47 @@
+---
+
+- name: payara installed or not
+  stat:
+    path: /payara/payara/payara-4.1.2.181/glassfish/bin/
+  register: payara_path_exist
+  become: true
+
+- name: change permission for asadmin
+  become: true
+  file:
+    name: "{{ payaraPath }}/payara-4.1.2.181/glassfish/bin/asadmin"
+    mode: '0744'
+    owner: root
+    group: root
+
+- name: payara version check
+  become: true
+  shell: /payara/payara/payara-4.1.2.181/glassfish/bin/asadmin version
+  register: payara_version
+  when: payara_path_exist.stat.exists
+  ignore_errors: true
+
+- name: setting fact
+  set_fact:
+    proceed_install_payara: true
+  when:
+    - payara_version.rc is defined
+    - payara_version.rc == 0
+  register: payara_status
+
+- pause:
+    prompt: "payara is not installed, enter yes if you want to install it else no"
+  register: proceed_install_payara
+  when:
+    - payara_status is skipped
+
+- name: registering payara_status
+  set_fact:
+    payara_status: "{{ payara_status }}"
+    proceed_install_payara: "{{ proceed_install_payara }}"
+
+- name: fetching user input
+  set_fact:
+    proceed_install_payara: "{{ proceed_install_payara.user_input }}"
+  when: payara_status is skipped
+

@@ -1,0 +1,55 @@
+---
+
+security_group_1: ansible_test12
+security_group_2: ansible_test14
+
+# defaults file for roles/create_payara_domain
+##### Input from payara bootstrap script ########
+appname: ansible_test1
+adminpassword: ansible_test1
+instanceport: 8059
+whichframework: ansible_test2
+resource_topic: "topic/{{ appname }}"
+resource_queue: "queue/{{ appname }}"
+username: ec2-user
+userHomeDir: "/home/{{ username }}"
+softwarePath: "{{ userHomeDir }}/softwares"
+payaraPath: /payara/payara
+
+##################### Set Variables ###########
+esoaloc: /payara/ESOA
+esoaprops: /payaraweb
+esoadata: /data
+installationPath: /payara/payara/payara-4.1.2.181
+passworddir: "{{ esoaloc }}/serviceconfig"
+user: GlassFishAdm
+masterpw: changeit
+domaindir: "{{ esoaloc }}/payara-domains"
+templatefile: "{{ installationPath }}/glassfish/common/templates/gf/esoa_domain.jar"
+#devuser: esoadev
+esoaDomains: /payara/ESOA
+servicetemplate: /home/ec2-user/softwares/Admin/4_install_payara_service
+payaraversion: "payara-4.1.2.181"
+adminconsoleSg: "sg-00c889b6adec9ff2a"
+privateapacheSg: "sg-00d0f0f95d39b6c3a"
+ip_int_jumphost: "10.142.245.213/32"
+ip_int_apache: "10.142.245.212/32"
+###########################Variables for deploying JMS rar ####################
+asadminPath: "{{ installationPath }}/glassfish/bin"
+payaraDomainPath: /payara/ESOA/payara-domains
+pwdFilePath: /payara/ESOA/serviceconfig
+pwdFileName: passwort.txt
+rarName: activemq-rar
+rarLocation: /home/ec2-user/activemq/activemq-rar-5.15.2.rar
+activeMQUser: "admin"
+activeMQPassword: "b868*Eszg_6%sXB2"
+activeMQUrl: 'ssl\://b-c3c22150-3ffb-47c8-9949-e1a79f7fef33-1.mq.ap-southeast-1.amazonaws.com\:61617'
+#activeMQUrl: "ssl\://b-1e651290-e1a3-4934-a016-f9503d3866fc-1.mq.eu-central-1.amazonaws.com\:61617"
+poolName: jms/amqConnectionPool
+factoryName: jms/amqConnectionFactory
+loginQueueName: queue/reportLogin
+applicationQueueName: queue/reportApplication
+botQueueName: queue/reportBot
+
+######################Variables for JMS resource creation topic and queue###############
+class_type: {'topicClass' : 'javax.jms.Topic', 'queueClass': 'javax.jms.Queue'}

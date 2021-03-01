@@ -1,14 +1,14 @@
 ---
 
-- name: Create a directory for payara
+- name: create directory
   file:
-    path: "{{ payaraPath }}/payara-4.1.2.181"
+    path: "{{ payaraPath }}"
     state: directory
 
 - name: Extract payara zip file
   unarchive:
     src: "{{ softwarePath }}/Admin/payara-4.1.2.181.zip"
-    dest: "{{ payaraPath }}/payara-4.1.2.181"
+    dest: "{{ payaraPath }}"
   become: true
 
 - name: change permission for payara directory
@@ -22,8 +22,13 @@
 - name: change permission for asadmin
   become: true
   file:
-    name: "{{ payaraPath }}/payara-4.1.2.181/payara-4.1.2.181/glassfish/bin/asadmin"
+    name: "{{ payaraPath }}/payara-4.1.2.181/glassfish/bin/asadmin"
+    mode: '0744'
     owner: root
     group: root
-    mode: '0744'
 
+- name: adding as java in asenv.conf
+  become: true
+  lineinfile:
+    path: '/payara/payara/payara-4.1.2.181/glassfish/config/asenv.conf'
+    line: 'AS_JAVA="/payara/java/jdk1.8.0_275"'

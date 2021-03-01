@@ -1,0 +1,24 @@
+---
+
+- name: check java installed or not
+  shell: java -version
+  register: java_result
+  ignore_errors: true
+
+- name: check
+  set_fact:
+    proceed_installation: true
+  when:
+    - java_result.rc == 0
+    - '"zulu" in java_result|lower'
+  register: java_check
+
+- pause:
+    prompt: "java zulu is not installed, enter yes if you want to install it else no"
+  register: proceed_installation
+  when: java_check is skipped
+
+- name: fetching user input
+  set_fact:
+    proceed_installation: "{{ proceed_installation.user_input }}"
+  when: java_check is skipped
